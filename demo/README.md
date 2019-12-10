@@ -34,7 +34,7 @@ The Alice/Faber demo is the (in)famous first verifiable credentials demo. Alice,
 In your browser, go to the docker playground service [Play with VON](http://play-with-von.vonx.io) (from the BC Gov). On the title screen, click "Start". On the next screen, click (in the left menu) "+Add a new instance".  That will start up a terminal in your browser. Run the following commands to start the Faber agent:
 
 ```bash
-git clone https://github.com/hyperledger/aries-cloudagent-python
+git clone https://github.com/tanmayc98/aries-cloudagent-python
 cd aries-cloudagent-python/demo
 LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo faber
 ```
@@ -42,12 +42,19 @@ LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo faber
 Now to start Alice's agent. Click the "+Add a new instance" button again to open another terminal session. Run the following commands to start Alice's agent:
 
 ```bash
-git clone https://github.com/hyperledger/aries-cloudagent-python
+git clone https://github.com/tanmayc98/aries-cloudagent-python
 cd aries-cloudagent-python/demo
 LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo alice
 ```
 
 Alice's agent is now running.
+
+For ACME Agent,
+```bash
+git clone https://github.com/tanmayc98/aries-cloudagent-python
+cd aries-cloudagent-python/demo
+LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo acme
+```
 
 Jump to the [Follow the Script](#follow-the-script) section below for further instructions.
 
