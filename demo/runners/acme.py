@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import random
+from uuid import uuid4
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa
