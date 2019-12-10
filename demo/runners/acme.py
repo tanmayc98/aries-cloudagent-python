@@ -20,6 +20,10 @@ from runners.support.utils import (
     require_indy,
 )
 
+CRED_PREVIEW_TYPE = (
+    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
+)
+
 LOGGER = logging.getLogger(__name__)
 
 
