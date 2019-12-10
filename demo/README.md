@@ -2,7 +2,9 @@
 
 ### Running in a Browser
 
-In your browser, go to the [docker playground service](https://labs.play-with-docker.com/). On the title screen, click "Start". On the next screen, click (in the left menu) "+Add a new instance".  That will start up a terminal in your browser. Run the following commands to start the Faber agent:
+In your browser, go to the [docker playground service](https://labs.play-with-docker.com/). On the title screen, click "Start". On the next screen, click (in the left menu) "+Add a new instance".  That will start up a terminal in your browser.
+
+Run the following commands to start the Faber (Company1) agent:
 
 ```bash
 git clone https://github.com/tanmayc98/aries-cloudagent-python
@@ -20,7 +22,7 @@ LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo alice
 
 Alice's agent is now running.
 
-For ACME Agent, Click the "+Add a new instance" button again to open another terminal session.
+For Acme (Company2) Agent, Click the "+Add a new instance" button again to open another terminal session.
 ```bash
 git clone https://github.com/tanmayc98/aries-cloudagent-python
 cd aries-cloudagent-python/demo
@@ -47,12 +49,12 @@ Faber:
 Alice:
 
 ```
-    3 = Send Message - send a message to Faber
+    3 = Send Message - send a message
     4 = Input New Invitation
     x = Exit - stop and exit
 ```
 
-Go to the Faber prompt, enter "1" to send a credential, and then "2" to request a proof.
+Go to the Company prompt, enter "1" to send a credential, and then "2" to request a proof.
 
 
 
