@@ -2,10 +2,7 @@ import asyncio
 import json
 import logging
 import os
-import random
 import sys
-
-from uuid import uuid4
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa
 
@@ -19,26 +16,25 @@ from runners.support.utils import (
     prompt_loop,
     require_indy,
 )
+
 LOGGER = logging.getLogger(__name__)
-
-#AGENT_PORT = int(sys.argv[1])
-
-#TIMING = False
-
-CRED_PREVIEW_TYPE = (
-    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
-)
 
 
 class AcmeAgent(DemoAgent):
     def __init__(self, http_port: int, admin_port: int, **kwargs):
-        super().__init__("Acme Agent", http_port, admin_port, prefix="Acme", 
-                        extra_args=["--auto-accept-invites", "--auto-accept-requests"],
-                        **kwargs)
+        super().__init__(
+            "Acme Agent",
+            http_port,
+            admin_port,
+            prefix="Acme",
+            extra_args=["--auto-accept-invites", "--auto-accept-requests"],
+            **kwargs,
+        )
         self.connection_id = None
         self._connection_ready = asyncio.Future()
         self.cred_state = {}
-        # TODO define a dict to hold credential attributes based on credential_definition_id
+        # TODO define a dict to hold credential attributes based on
+        # the credential_definition_id
         self.cred_attrs = {}
 
     async def detect_connection(self):
@@ -70,23 +66,17 @@ class AcmeAgent(DemoAgent):
         )
 
         if state == "request_received":
-            # TODO handle received credential requests
-            log_status("#17 Issue credential to X")
-
             # TODO issue credentials based on the credential_definition_id
+            # issue credentials based on the credential_definition_id
             cred_attrs = self.cred_attrs[message["credential_definition_id"]]
-            cred_preview = {
-                "@type": CRED_PREVIEW_TYPE,
-                "attributes": [
-                    {"name": n, "value": v} for (n, v) in cred_attrs.items()
-                ],
-            }
             await self.admin_POST(
                 f"/issue-credential/records/{credential_exchange_id}/issue",
                 {
                     "comment": f"Issuing credential, exchange {credential_exchange_id}",
-                    "credential_preview": cred_preview,
-                },
+                    "credential_preview": CredentialPreview(
+                        attributes=CredAttrSpec.list_plain(cred_attrs)
+                    ).serialize()
+                }
             )
 
     async def handle_present_proof(self, message):
@@ -102,47 +92,28 @@ class AcmeAgent(DemoAgent):
 
         if state == "presentation_received":
             # TODO handle received presentations
-
-            # TODO if proof of student id, then validate
-            log_status("#27 Process the proof provided by X")
-            log_status("#28 Check if proof is valid")
-            self.log("Presentation received:", json.dumps(message))
-            proof = await self.admin_POST(
-                f"/present-proof/records/{presentation_exchange_id}/"
-                "verify_presentation"
+            # if presentation is a degree schema (proof of education),
+            # check values received
+            pres_req = message["presentation_request"]
+            pres = message["presentation"]
+            is_proof_of_education = (
+                pres_req["name"] == "Proof of Education"
             )
-            self.log("Proof =", proof["verified"])
-            self.log(message['presentation_request']['name'])
-
-            # TODO if presentation is a degree schema (proof of education), also ask for proof of student id
-           ''' is_proof_of_education = (message['presentation_request']['name'] == 'Proof of Education')
             if is_proof_of_education:
-                log_status("#28.1 Received proof of education, now check for proof of student id")
-                requested_student_id = None
-                for attr, value in message['presentation_request']['requested_attributes'].items():
-                    if value['name'] == 'student_id':
-                        requested_student_id = message['presentation']['requested_proof']['revealed_attrs'][attr]['raw']
-                proof_attrs = [
-                    {"name": "student_id", "restrictions": [{"schema_name": "student id schema"}]},
-                    {"name": "name", "restrictions": [{"schema_name": "student id schema"}]}, #, "attr::student_id::value": requested_student_id}]},
-                    {"name": "program", "restrictions": [{"schema_name": "student id schema"}]}, #, "attr::student_id::value": requested_student_id}]},
-                    {"name": "effective_date", "restrictions": [{"schema_name": "student id schema"}]}, #, "attr::student_id::value": requested_student_id}]},
-                ]
-                proof_predicates = []
-                proof_request = {
-                    "name": "Proof of Student ID",
-                    "version": "1.0",
-                    "connection_id": self.connection_id,
-                    "requested_attributes": proof_attrs,
-                    "requested_predicates": proof_predicates,
-                }
-                await self.admin_POST(
-                    "/presentation_exchange/send_request", proof_request
-                )
+                log_status("#28.1 Received proof of education, check claims")
+                for (referent, attr_spec) in pres_req["requested_attributes"].items():
+                    self.log(
+                        f"{attr_spec['name']}: "
+                        f"{pres['requested_proof']['revealed_attrs'][referent]['raw']}"
+                    )
+                for id_spec in pres["identifiers"]:
+                    # just print out the schema/cred def id's of presented claims
+                    self.log(f"schema_id: {id_spec['schema_id']}")
+                    self.log(f"cred_def_id {id_spec['cred_def_id']}")
+                # TODO placeholder for the next step
             else:
-                self.log("#28.1 Received ", message['presentation_request']['name'])
-
-            pass'''
+                # in case there are any other kinds of proofs received
+                self.log("#28.1 Received ", message["presentation_request"]["name"])
 
     async def handle_basicmessages(self, message):
         self.log("Received message:", message["content"])
@@ -156,11 +127,12 @@ async def main(start_port: int, show_timing: bool = False):
         sys.exit(1)
 
     agent = None
-    #start_port = AGENT_PORT
 
     try:
         log_status("#1 Provision an agent and wallet, get back configuration details")
-        agent = AcmeAgent(start_port, start_port + 1, genesis_data=genesis, timing=show_timing)
+        agent = AcmeAgent(
+            start_port, start_port + 1, genesis_data=genesis, timing=show_timing
+        )
         await agent.listen_webhooks(start_port + 2)
         await agent.register_did()
 
@@ -172,6 +144,7 @@ async def main(start_port: int, show_timing: bool = False):
         # Create a schema
         log_status("#3 Create a new schema on the ledger")
         with log_timer("Publish schema duration:"):
+            # define schema
             version = format(
                 "%d.%d.%d"
                 % (
@@ -180,26 +153,15 @@ async def main(start_port: int, show_timing: bool = False):
                     random.randint(1, 101),
                 )
             )
-            # TODO define schema
-            (schema_id, credential_definition_id) = await agent.register_schema_and_creddef(
-                "employee id schema", version, ["employee_id", "name", "date", "position"]
-                )
-'''
-        log_status("#3 Create a new schema on the ledger")
-        with log_timer("Publish schema duration:"):
-            version_2 = format(
-                "%d.%d.%d"
-                % (
-                    random.randint(1, 101),
-                    random.randint(1, 101),
-                    random.randint(1, 101),
-                )
+            (
+                schema_id,
+                credential_definition_id,
+            ) = await agent.register_schema_and_creddef(
+                "employee id schema",
+                version,
+                ["employee_id", "name", "date", "position"],
             )
-            # TODO define schema
-            (schema_id_2, credential_definition_id_2) = await agent.register_schema_and_creddef(
-                "income schema", version_2, ["employee_id", "name", "date", "salary"]
-                )
-'''
+
         with log_timer("Generate invitation duration:"):
             # Generate an invitation
             log_status(
@@ -220,69 +182,70 @@ async def main(start_port: int, show_timing: bool = False):
             "(1) Issue Credential, (2) Send Proof Request, "
             + "(3) Send Message (X) Exit? [1/2/3/X] "
         ):
-            if option is None or option in "xX":
+            if option in "xX":
                 break
 
             elif option == "1":
                 log_status("#13 Issue credential offer to X")
-                # TODO credential offer
+                # TODO credential offers
                 agent.cred_attrs[credential_definition_id] = {
                     "employee_id": "ACME0009",
                     "name": "Alice Smith",
-                    "date": "2019-06-30",
-                    "position": "CEO",
+                    "date": date.isoformat(date.today()),
+                    "position": "CEO"
                 }
-
-                cred_preview = {
-                    "@type": CRED_PREVIEW_TYPE,
-                    "attributes": [
-                        {"name": n, "value": v}
-                        for (n, v) in agent.cred_attrs[credential_definition_id].items()
-                    ],
-                }
-
                 offer_request = {
-                    "credential_definition_id": credential_definition_id,
                     "connection_id": agent.connection_id,
+                    "cred_def_id": credential_definition_id,
                     "comment": f"Offer on cred def id {credential_definition_id}",
-                    "credential_preview": cred_preview,
+                    "credential_preview": CredentialPreview(
+                        attributes=CredAttrSpec.list_plain(
+                            agent.cred_attrs[credential_definition_id]
+                        )
+                    ).serialize()
                 }
-                await agent.admin_POST("/credential_exchange/send-offer", offer_request)
-'''
-                log_status("#13 Issue credential offer 2 to X")
-                # TODO credential offers
-                offer_2 = {
-                    "credential_definition_id": credential_definition_id_2,
-                    "connection_id": agent.connection_id,
-                }
-                agent.cred_attrs[credential_definition_id_2] = {
-                    "employee_id": "ACME0009",
-                    "name": "Alice Smith",
-                    "date": "2019-06-30",
-                    "salary": "120000",
-                }
-                await agent.admin_POST("/credential_exchange/send-offer", offer_2)
-'''
+                await agent.admin_POST(
+                    "/issue-credential/send-offer",
+                    offer_request
+                )
+
             elif option == "2":
                 log_status("#20 Request proof of degree from alice")
                 # TODO presentation requests
-                proof_attrs = [
-                    {"name": "name", "restrictions": [{"schema_name": "degree schema"}]},
-                    #{"name": "student_id", "restrictions": [{"schema_name": "degree schema", "attr::name::value": "Alice Smith"}]},
-                    {"name": "date", "restrictions": [{"schema_name": "degree schema"}]}, #, "attr::name::value": "Alice Smith"}]},
-                    {"name": "degree", "restrictions": [{"schema_name": "degree schema"}]}, #, "attr::name::value": "Alice Smith"}]},
+                req_attrs = [
+                    {
+                        "name": "name",
+                        "restrictions": [{"schema_name": "degree schema"}]
+                    },
+                    {
+                        "name": "date",
+                        "restrictions": [{"schema_name": "degree schema"}]
+                    },
+                    {
+                        "name": "degree",
+                        "restrictions": [{"schema_name": "degree schema"}]
+                    }
                 ]
-                proof_predicates = []
-                proof_request = {
+                req_preds = []
+                indy_proof_request = {
                     "name": "Proof of Education",
                     "version": "1.0",
-                    "connection_id": agent.connection_id,
-                    "requested_attributes": proof_attrs,
-                    "requested_predicates": proof_predicates,
+                    "nonce": str(uuid4().int),
+                    "requested_attributes": {
+                        f"0_{req_attr['name']}_uuid": req_attr
+                        for req_attr in req_attrs
+                    },
+                    "requested_predicates": {}
                 }
-                agent.log("Proof request:", json.dumps(proof_request))
+                proof_request_web_request = {
+                    "connection_id": agent.connection_id,
+                    "proof_request": indy_proof_request
+                }
+                # this sends the request to our agent, which forwards it to Alice
+                # (based on the connection_id)
                 await agent.admin_POST(
-                    "/presentation_exchange/send_request", proof_request
+                    "/present-proof/send-request",
+                    proof_request_web_request
                 )
 
             elif option == "3":
@@ -315,7 +278,7 @@ async def main(start_port: int, show_timing: bool = False):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Runs a Faber demo agent.")
+    parser = argparse.ArgumentParser(description="Runs an Acme demo agent.")
     parser.add_argument(
         "-p",
         "--port",
