@@ -194,7 +194,7 @@ async def main(start_port: int, show_timing: bool = False):
                 agent.cred_attrs[credential_definition_id] = {
                     "employee_id": "ACME0009",
                     "name": "Alice Smith",
-                    "date": date.isoformat(date.today()),
+                    "date": "2019-05-28",
                     "position": "CEO"
                 }
                 offer_request = {
