@@ -2,7 +2,7 @@
 
 ### Running in a Browser
 
-In your browser, go to the docker playground service [Play with VON](http://play-with-von.vonx.io) (from the BC Gov). On the title screen, click "Start". On the next screen, click (in the left menu) "+Add a new instance".  That will start up a terminal in your browser. Run the following commands to start the Faber agent:
+In your browser, go to the [docker playground service](https://labs.play-with-docker.com/). On the title screen, click "Start". On the next screen, click (in the left menu) "+Add a new instance".  That will start up a terminal in your browser. Run the following commands to start the Faber agent:
 
 ```bash
 git clone https://github.com/tanmayc98/aries-cloudagent-python
@@ -20,7 +20,7 @@ LEDGER_URL=http://dev.greenlight.bcovrin.vonx.io ./run_demo alice
 
 Alice's agent is now running.
 
-For ACME Agent,
+For ACME Agent, Click the "+Add a new instance" button again to open another terminal session.
 ```bash
 git clone https://github.com/tanmayc98/aries-cloudagent-python
 cd aries-cloudagent-python/demo
