@@ -151,7 +151,7 @@ async def main(start_port: int, show_timing: bool = False):
                 _,  # schema id
                 credential_definition_id,
             ) = await agent.register_schema_and_creddef(
-                "degree schema", version, ["name", "date", "degree", "age"]
+                "ex_employee schema", version, ["name", "start_date","end_date" ,"position", "salary"]
             )
 
         # TODO add an additional credential for Student ID
@@ -185,9 +185,10 @@ async def main(start_port: int, show_timing: bool = False):
                 # TODO define attributes to send for credential
                 agent.cred_attrs[credential_definition_id] = {
                     "name": "Alice Smith",
-                    "date": "2018-05-28",
-                    "degree": "Maths",
-                    "age": "24",
+                    "start_date": "2018-05-28",
+                    "end_date": "2019-05-28",
+                    "position": "CFO",
+                    "salary": "2400",
                 }
 
                 cred_preview = {
@@ -211,20 +212,19 @@ async def main(start_port: int, show_timing: bool = False):
                 log_status("#20 Request proof of degree from alice")
                 req_attrs = [
                     {"name": "name", "restrictions": [{"issuer_did": agent.did}]},
-                    {"name": "date", "restrictions": [{"issuer_did": agent.did}]},
-                    {"name": "degree", "restrictions": [{"issuer_did": agent.did}]},
-                    {"name": "self_attested_thing"},
+                    {"name": "start_date", "restrictions": [{"issuer_did": agent.did}]},
+                    {"name": "end_date", "restrictions": [{"issuer_did": agent.did}]},
                 ]
                 req_preds = [
                     {
-                        "name": "age",
+                        "name": "salary",
                         "p_type": ">=",
-                        "p_value": 18,
+                        "p_value": 1800,
                         "restrictions": [{"issuer_did": agent.did}],
                     }
                 ]
                 indy_proof_request = {
-                    "name": "Proof of Education",
+                    "name": "Proof of Previous Employment",
                     "version": "1.0",
                     "nonce": str(uuid4().int),
                     "requested_attributes": {
