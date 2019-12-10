@@ -107,11 +107,11 @@ class AcmeAgent(DemoAgent):
             # check values received
             pres_req = message["presentation_request"]
             pres = message["presentation"]
-            is_proof_of_education = (
-                pres_req["name"] == "Proof of Education"
+            is_proof_of_employment = (
+                pres_req["name"] == "Proof of Employment"
             )
-            if is_proof_of_education:
-                log_status("#28.1 Received proof of education, check claims")
+            if is_proof_of_employment:
+                log_status("#28.1 Received proof of Employment, check claims")
                 for (referent, attr_spec) in pres_req["requested_attributes"].items():
                     self.log(
                         f"{attr_spec['name']}: "
@@ -168,9 +168,9 @@ async def main(start_port: int, show_timing: bool = False):
                 schema_id,
                 credential_definition_id,
             ) = await agent.register_schema_and_creddef(
-                "employee id schema",
+                "current_employee schema",
                 version,
-                ["employee_id", "name", "date", "position"],
+                ["employee_id", "name", "start_date", "position","salary"],
             )
 
         with log_timer("Generate invitation duration:"):
@@ -202,8 +202,9 @@ async def main(start_port: int, show_timing: bool = False):
                 agent.cred_attrs[credential_definition_id] = {
                     "employee_id": "ACME0009",
                     "name": "Alice Smith",
-                    "date": "2019-05-28",
-                    "position": "CEO"
+                    "start_date": "2019-05-28",
+                    "position": "CEO",
+                    "salary" : "3000"
                 }
                 cred_preview = {
                     "@type": CRED_PREVIEW_TYPE,
@@ -224,25 +225,25 @@ async def main(start_port: int, show_timing: bool = False):
                 )
 
             elif option == "2":
-                log_status("#20 Request proof of degree from alice")
+                log_status("#20 Request proof of employement from alice")
                 # TODO presentation requests
                 req_attrs = [
                     {
                         "name": "name",
-                        "restrictions": [{"schema_name": "degree schema"}]
+                        "restrictions": [{"schema_name": "ex_employee schema"}]
                     },
                     {
-                        "name": "date",
-                        "restrictions": [{"schema_name": "degree schema"}]
+                        "name": "end_date",
+                        "restrictions": [{"schema_name": "ex_employee schema"}]
                     },
                     {
-                        "name": "degree",
-                        "restrictions": [{"schema_name": "degree schema"}]
+                        "name": "start_date",
+                        "restrictions": [{"schema_name": "ex_employee schema"}]
                     }
                 ]
                 req_preds = []
                 indy_proof_request = {
-                    "name": "Proof of Education",
+                    "name": "Proof of Employment",
                     "version": "1.0",
                     "nonce": str(uuid4().int),
                     "requested_attributes": {
